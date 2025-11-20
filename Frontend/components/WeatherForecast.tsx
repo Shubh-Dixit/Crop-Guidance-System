@@ -105,12 +105,13 @@ const WeatherForecast = ({ onBack }: any) => {
           return;
         }
 
-        const apiKey = "0896a4235d3d6db259b0c6a18d462432";
+        const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-        if (!apiKey) {
-          setError("Weather API key missing.");
-          return;
-        }
+if (!apiKey) {
+  setError("Weather API key missing. Please add VITE_WEATHER_API_KEY in .env ");
+  return;
+}
+
 
         // API URLs
         const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;

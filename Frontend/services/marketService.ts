@@ -1,6 +1,14 @@
-const API_KEY = "579b464db66ec23bdd00000194521d09db5044d07f275333b0e5c02d";
+// --- Load API Key From Environment (.env) ---
+const API_KEY = import.meta.env.VITE_GOV_API_KEY;
+
+if (!API_KEY) {
+  console.error("❌ Government API key missing! Add it to .env as VITE_GOV_API_KEY");
+}
+
 const BASE_URL =
   "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070";
+
+// --------------------- Interfaces --------------------------
 
 export interface MarketData {
   state: string;
@@ -35,6 +43,8 @@ export interface MarketFilters {
   location?: Coordinates;
 }
 
+// --------------------- Helpers -----------------------------
+
 const calculateDistance = (
   lat1: number,
   lon1: number,
@@ -54,16 +64,19 @@ const calculateDistance = (
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
+// --------------------- Main Function ------------------------
+
 export const fetchMarketData = async (
   filters: MarketFilters = {}
 ): Promise<MarketData[]> => {
   const params = new URLSearchParams({
-    "api-key": API_KEY,
+    "api-key": API_KEY || "",
     format: "json",
     limit: String(filters.limit || 500),
     offset: String(filters.offset || 0),
   });
 
+  // Smart filters (supports partial matching in backend)
   if (filters.state) params.append("filters[state]", filters.state);
   if (filters.district) params.append("filters[district]", filters.district);
   if (filters.market) params.append("filters[market]", filters.market);
@@ -72,39 +85,54 @@ export const fetchMarketData = async (
 
   try {
     const res = await fetch(`${BASE_URL}?${params.toString()}`);
-    const json = await res.json();
 
+    if (!res.ok) {
+      console.error("API failed:", await res.text());
+      return [];
+    }
+
+    const json = await res.json();
     let records = json.records || [];
 
+    // --------- Search Bar Filter ---------
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
-      records = records.filter(
-        (x: MarketData) =>
-          x.market?.toLowerCase().includes(q) ||
-          x.state?.toLowerCase().includes(q) ||
-          x.district?.toLowerCase().includes(q) ||
-          x.commodity?.toLowerCase().includes(q)
+
+      records = records.filter((x: MarketData) =>
+        [
+          x.market,
+          x.state,
+          x.district,
+          x.commodity,
+          x.variety,
+          x.grade,
+        ]
+          .filter(Boolean)
+          .some((v) => v!.toLowerCase().includes(q))
       );
     }
 
+    // --------- Location Filter ---------
     if (filters.location) {
       const { latitude, longitude, radiusKm = 50 } = filters.location;
 
       records = records.filter((x: MarketData) => {
         if (!x.latitude || !x.longitude) return false;
-        const d = calculateDistance(
+
+        const distance = calculateDistance(
           latitude,
           longitude,
           Number(x.latitude),
           Number(x.longitude)
         );
-        return d <= radiusKm;
+
+        return distance <= radiusKm;
       });
     }
 
     return records;
   } catch (e) {
-    console.error("Market API error:", e);
+    console.error("❌ Market API error:", e);
     return [];
   }
 };
