@@ -26,7 +26,8 @@ const CropPrediction: React.FC = () => {
     setPrediction(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/predict", {
+      const API_URL = import.meta.env.VITE_CROP_API_URL || "http://127.0.0.1:5000";
+      const response = await fetch(`${API_URL}/api/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

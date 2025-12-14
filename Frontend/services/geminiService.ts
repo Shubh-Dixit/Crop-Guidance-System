@@ -1,9 +1,9 @@
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCxZalOTzBVCttRfxI1p0NBGztWmXYeqKg';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export const getFarmingTip = async (location: string, season: string): Promise<string> => {
   try {
     const prompt = `Generate a brief (1-2 sentences) farming tip for ${location} during ${season}. Focus on practical, actionable advice for local farmers.`;
-    
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {

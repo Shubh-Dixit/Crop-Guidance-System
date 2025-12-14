@@ -1,4 +1,4 @@
-const API_KEY = '0896a4235d3d6db259b0c6a18d462432'; // You'll need to get an API key from OpenWeatherMap
+const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 export interface WeatherData {
@@ -40,11 +40,11 @@ export const getCurrentWeather = async (lat: number, lon: number) => {
     const response = await fetch(
       `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
     );
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch weather data');
     }
-    
+
     const data = await response.json();
     return data as WeatherData;
   } catch (error) {
